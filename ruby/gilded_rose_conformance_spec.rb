@@ -8,9 +8,10 @@ SAVED_TESTS_MATCHER = "./test_data/*.csv"
 # Some concern that this isn't a *unit* test since it uses the Item class
 describe GildedRose do
   describe "#update_quality" do
-    it "produces predictable results" do
+    context "produces predictable results" do
       test_files = Dir[SAVED_TESTS_MATCHER]
       test_files.each do |test_file|
+        it "for #{test_file}" do
         # Get the initial item information
         test_table = CSV.read(test_file)
         name = test_table[0][1].to_s
@@ -28,6 +29,7 @@ describe GildedRose do
           gilded_rose.update_quality
           day += 1
         end
+      end
       end
     end
   end

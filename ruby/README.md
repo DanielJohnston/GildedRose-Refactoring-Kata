@@ -27,6 +27,9 @@ So, a way of representing these rules in hierarchical form is as an array, with 
 - [x] Generate legacy test cases for future comparison
 - [ ] Refactor the update_quality method for easier maintenance and updating
 - [ ] Refactor the legacy test code to use CSV::Table for clearer code
+- [ ] Implement the 'conjured' items rule
+- [ ] Remove dependency on Item class for update_quality unit tests
+- [x] Split each legacy test file into an individual test to report separately on each file prevent halting on the very first exception
 - [ ] Create tests for the new 'conjured' status
 - [ ] Pass the new 'conjured' status
 
