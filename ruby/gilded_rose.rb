@@ -1,54 +1,58 @@
 class GildedRose
 
+ITEM_STRINGS = {
+  brie: 'Aged Brie',
+  passes: 'Backstage passes to a TAFKAL80ETC concert',
+  sulfuras: 'Sulfuras, Hand of Ragnaros'
+}
+
+RULES = [
+  { matcher: Proc.new{ |item| true },
+  updater: Proc.new{ |item| item.quality - 1 }},
+  { matcher: Proc.new{ |item| ITEM_STRINGS.values_at(:brie, :passes).include? item.name },
+  updater: Proc.new{ |item| item.quality + 1 }},
+  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 11 },
+  updater: Proc.new{ |item| item.quality + 2 }},
+  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 6 },
+  updater: Proc.new{ |item| item.quality + 3 }},
+  { matcher: Proc.new{ |item| item.sell_in <= 0 },
+  updater: Proc.new{ |item| item.quality - 2 }},
+  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:passes] == item.name },
+  updater: Proc.new{ |item| 0 }},
+  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:brie] == item.name },
+  updater: Proc.new{ |item| item.quality + 2 }},
+  { matcher: Proc.new{ |item| ITEM_STRINGS[:sulfuras] == item.name },
+  updater: Proc.new{ |item| item.quality + 0 }}
+]
+# ,
+# { matcher: Proc.new{ |item| item.quality > 50 && ITEM_STRINGS[:sulfuras] != item.name },
+# updater: Proc.new{ |item| item.quality = 50 }},
+#
+# { matcher: Proc.new{ |item| item.quality < 0 },
+# updater: Proc.new{ |item| item.quality = 0 }},
+# { matcher: Proc.new{ |item| ITEM_STRINGS[:sulfuras] != item.name },
+# updater: Proc.new{ |item| item.sell_in = 50 }},
+
   def initialize(items)
     @items = items
   end
 
   def update_quality()
     @items.each do |item|
-      if item.name != "Aged Brie" and item.name != "Backstage passes to a TAFKAL80ETC concert"
-        if item.quality > 0
-          if item.name != "Sulfuras, Hand of Ragnaros"
-            item.quality = item.quality - 1
-          end
-        end
-      else
-        if item.quality < 50
-          item.quality = item.quality + 1
-          if item.name == "Backstage passes to a TAFKAL80ETC concert"
-            if item.sell_in < 11
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-            if item.sell_in < 6
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-          end
+      new_quality = item.quality
+
+      RULES.each do |rule_proc|
+        if rule_proc[:matcher].call(item)
+          new_quality = rule_proc[:updater].call(item)
         end
       end
-      if item.name != "Sulfuras, Hand of Ragnaros"
-        item.sell_in = item.sell_in - 1
-      end
-      if item.sell_in < 0
-        if item.name != "Aged Brie"
-          if item.name != "Backstage passes to a TAFKAL80ETC concert"
-            if item.quality > 0
-              if item.name != "Sulfuras, Hand of Ragnaros"
-                item.quality = item.quality - 1
-              end
-            end
-          else
-            item.quality = item.quality - item.quality
-          end
-        else
-          if item.quality < 50
-            item.quality = item.quality + 1
-          end
-        end
-      end
+
+      new_quality = 50 if ITEM_STRINGS[:sulfuras] != item.name && new_quality > 50
+      new_quality = [new_quality, 0].max
+      item.quality = new_quality
+
+      item.sell_in -= 1 unless ITEM_STRINGS[:sulfuras] == item.name
+
     end
   end
 end
