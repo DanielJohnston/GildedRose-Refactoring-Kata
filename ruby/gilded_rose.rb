@@ -3,69 +3,26 @@ class GildedRose
 ITEM_STRINGS = {
   brie: 'Aged Brie',
   passes: 'Backstage passes to a TAFKAL80ETC concert',
-  sulfuras: 'Sulfuras, Hand of Ragnaros'
+  sulfuras: 'Sulfuras, Hand of Ragnaros',
+  conjured: 'Conjured Mana Cake'
 }
 
-NEW_RULES = [
-  { matcher: Proc.new{ true },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality - 1 }}
-  },
-  { matcher: Proc.new{ |item| ITEM_STRINGS.values_at(:brie, :passes).include? item.name },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality + 1 }}
-  },
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 11 },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality + 2 }}
-  },
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 6 },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality + 3 }}
-  },
-  { matcher: Proc.new{ |item| item.sell_in <= 0 },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality - 2 }}
-  },
-  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:passes] == item.name },
-  updater: Proc.new{ |updater| Proc.new{ |quality| 0 }}
-  },
-  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:brie] == item.name },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality + 2 }}
-  },
-  # { matcher: Proc.new{ true },
-  #   updater: Proc.new{ |updater| [updater.call, 0].max }
-  # },
-
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:sulfuras] == item.name },
-  updater: Proc.new{ |updater| Proc.new{ |quality| quality + 0 }}
-  }
-]
-
-RULES = [
-  { matcher: Proc.new{ |item| true },
-  updater: Proc.new{ |item| item.quality - 1 }},
-  { matcher: Proc.new{ |item| ITEM_STRINGS.values_at(:brie, :passes).include? item.name },
-  updater: Proc.new{ |item| item.quality + 1 }},
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 11 },
-  updater: Proc.new{ |item| item.quality + 2 }},
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:passes] == item.name && item.sell_in < 6 },
-  updater: Proc.new{ |item| item.quality + 3 }},
-  { matcher: Proc.new{ |item| item.sell_in <= 0 },
-  updater: Proc.new{ |item| item.quality - 2 }},
-  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:passes] == item.name },
-  updater: Proc.new{ |item| 0 }},
-  { matcher: Proc.new{ |item| item.sell_in <= 0 && ITEM_STRINGS[:brie] == item.name },
-  updater: Proc.new{ |item| item.quality + 2 }},
-  { matcher: Proc.new{ |item| ITEM_STRINGS[:sulfuras] == item.name },
-  updater: Proc.new{ |item| item.quality + 0 }}
-]
-# ,
-# { matcher: Proc.new{ |item| item.quality > 50 && ITEM_STRINGS[:sulfuras] != item.name },
-# updater: Proc.new{ |item| item.quality = 50 }},
-#
-# { matcher: Proc.new{ |item| item.quality < 0 },
-# updater: Proc.new{ |item| item.quality = 0 }},
-# { matcher: Proc.new{ |item| ITEM_STRINGS[:sulfuras] != item.name },
-# updater: Proc.new{ |item| item.sell_in = 50 }},
-
   def initialize(items)
-    @items = items
+    @items = []
+    items.each do |item|
+      item_type = ITEM_STRINGS.key(item.name)
+      item_type ||= :normal
+      # puts "item_type #{item_type}"
+      def item.update_quality
+
+      end
+    end
+  end
+
+  def define_update_quality(item, update_proc)
+    item.define_singleton_method(:update_quality) do
+      update_proc.call
+    end
   end
 
   def update_quality()
@@ -111,3 +68,5 @@ class Item
     "#{@name}, #{@sell_in}, #{@quality}"
   end
 end
+
+class Brie
