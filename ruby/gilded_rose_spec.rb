@@ -8,6 +8,12 @@ describe GildedRose do
       GildedRose.new(items).update_quality()
       expect(items[0].name).to eq "foo"
     end
+
+    it "implements conjured item updating" do
+      items = [Item.new("Conjured Mana Cake", 5, 5)]
+      GildedRose.new(items).update_quality()
+      expect(items[0].quality).to eq 3
+    end
   end
 
 end

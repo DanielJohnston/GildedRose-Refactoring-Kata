@@ -1,56 +1,71 @@
 class GildedRose
 
-ITEM_STRINGS = {
-  brie: 'Aged Brie',
-  passes: 'Backstage passes to a TAFKAL80ETC concert',
-  sulfuras: 'Sulfuras, Hand of Ragnaros',
-  conjured: 'Conjured Mana Cake'
-}
+CHANGE_QUALITY = -1
+CHANGE_SELL_IN = -1
+
+UPDATE_RULES = [
+  # All items default change
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    true },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    item.sell_in <= 0 ? [-2, -1] : [-1, -1] }},
+  # Aged Brie
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.name == 'Aged Brie' },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    [item.sell_in <= 0 ? 2 : 1, change_sell_in] }},
+  # Backstage passes
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.name == 'Backstage passes to a TAFKAL80ETC concert' },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    change_quality = 1
+    change_quality = 2 if item.sell_in < 11
+    change_quality = 3 if item.sell_in < 6
+    change_quality = -item.quality if item.sell_in <=0
+    [change_quality, change_sell_in] }},
+  # Conjured Mana Cake
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.name == 'Conjured Mana Cake' },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    change_quality *= 2 if change_quality < 0
+    [change_quality, change_sell_in] }},
+  # Item quality > 50
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.quality + change_quality > 50 },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    [50 - item.quality, change_sell_in] }},
+  # Item quality < 0
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.quality + change_quality < 0 },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+    [0 - item.quality, change_sell_in] }},
+  # Sulfuras
+  { matcher: Proc.new{ |item, change_quality, change_sell_in|
+    item.name == 'Sulfuras, Hand of Ragnaros' },
+    updater: Proc.new{ |item, change_quality, change_sell_in|
+      [0, 0] }}
+]
 
   def initialize(items)
-    @items = []
-    items.each do |item|
-      item_type = ITEM_STRINGS.key(item.name)
-      item_type ||= :normal
-      # puts "item_type #{item_type}"
-      def item.update_quality
-
-      end
-    end
-  end
-
-  def define_update_quality(item, update_proc)
-    item.define_singleton_method(:update_quality) do
-      update_proc.call
-    end
+    @items = items
   end
 
   def update_quality()
     @items.each do |item|
-      new_quality = item.quality
+      # Initialise default quality reduction and sell_in reduction
+      change_quality = CHANGE_QUALITY
+      change_sell_in = CHANGE_SELL_IN
 
-      update_proc = Proc.new{ |quality| quality }
-
-      NEW_RULES.each do |rule_proc|
-        if rule_proc[:matcher].call(item)
-          update_proc = rule_proc[:updater].call(update_proc)
+      # Iterate through the rules in order, updating changes to quality and sell_in
+      UPDATE_RULES.each do |update_rule|
+        if update_rule[:matcher].call(item, change_quality, change_sell_in)
+          change_quality, change_sell_in = update_rule[:updater].call(item, change_quality, change_sell_in)
         end
       end
 
-      new_quality = update_proc.call(item.quality)
-
-      # RULES.each do |rule_proc|
-      #   if rule_proc[:matcher].call(item)
-      #     new_quality = rule_proc[:updater].call(item)
-      #   end
-      # end
-
-      new_quality = 50 if ITEM_STRINGS[:sulfuras] != item.name && new_quality > 50
-      new_quality = [new_quality, 0].max
-      item.quality = new_quality
-
-      item.sell_in -= 1 unless ITEM_STRINGS[:sulfuras] == item.name
-
+      # Apply changes to quality and sell_in
+      item.quality += change_quality
+      item.sell_in += change_sell_in
     end
   end
 end
@@ -68,5 +83,3 @@ class Item
     "#{@name}, #{@sell_in}, #{@quality}"
   end
 end
-
-class Brie
